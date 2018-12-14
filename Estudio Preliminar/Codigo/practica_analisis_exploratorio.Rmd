@@ -1,0 +1,69 @@
+---
+title: "Práctica Análisis Exploratorio"
+author: "Esther Puerto Sanz"
+date: "10 December 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "../Datos")
+```
+
+## 1-Introducción
+
+Nuestro objetivo de análisis es predecir el valor de la nota final G3 y además identificar cuáles pueden ser las principales variables que afectan al éxito o fracaso en la educación.
+
+## 2-Carga de Datos
+
+Antes de cargar los datos, procedemos a instalar y cargar las librerias necesarias para el Análisis Exploratorio.
+
+```{r librerias, echo=TRUE}
+getwd()
+if(!is.element("arules", installed.packages())){
+  install.packages("arules")}
+      knitr::opts_chunk$set(echo = TRUE)
+      library(arules)
+
+```
+
+Se cargan los datos correspondientes a "Student Performance Data Set" de Machine Learning Repository que recoge información de estudiantes de Secundaria de dos colegios Portugueses en las asignaturas de Matemáticas y Portugués. Se procede a hacer un merge entre ambas bases de datos.
+
+```{r carga de datos, echo=TRUE}
+getwd()
+studentMat <- read.table("student-mat.csv", row.names=NULL, sep=";", header = TRUE)
+studentPor <- read.table("student-por.csv", row.names=NULL, sep=";", header = TRUE)
+
+```
+Nos salen 382 filas.
+
+
+## 3 - Análisis Descriptivo
+
+```{r, echo=TRUE}
+
+summary(studentMat)
+summary(studentPor)
+```
+
+```{r, echo=TRUE}
+str(studentMat)
+str(studentPor)
+```
+
+## 4 - Análisis Exploratorio
+```{r, echo=FALSE}
+rules <- apriori(studentMat, parameter=list(support=0.5, confidence=0.75))
+inspect(rules)
+```
+
+```{r, echo=FALSE}
+d <- dist(as.matrix(studentMat))
+hc <- hclust(d)
+plot(hc)
+```
+
+
+## 5 - Conclusiones
+
+
