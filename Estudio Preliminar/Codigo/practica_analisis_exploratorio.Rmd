@@ -1,7 +1,7 @@
 ---
-title: "PrÃƒÂ¡ctica AnÃƒÂ¡lisis Exploratorio"
+title: "Práctica Análisis Exploratorio"
 author: "Esther Puerto Sanz"
-date: "10 December 2018"
+date: "18 December 2018"
 output:
   html_document:
     df_print: paged
@@ -13,204 +13,139 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = "../Datos")
 ```
 
-##1-Introducción
+##1 - Introducción
 
-Nuestro objetivo de análisis es identificar cuáles pueden ser las principales variables que afectan al éxito o fracaso en la educación de los estudiantes de Matemáticas y además predecir el valor de la nota final G3, que va a ser nuestra variable objetivo.
+Nuestro objetivo de análisis es identificar cuáles pueden ser las principales variables que afectan al éxito o fracaso en la educación de los estudiantes de Matemáticas medido mediante la nota final G3, que va a ser nuestra variable objetivo.
 
-##2-Carga de Paquetes y Datos
+##2 - Carga de Paquetes y Datos
+###   2.1- Instalación de Paquetes y carga de librerias
 
-Antes de cargar los datos, procedemos a instalar y cargar las librerias necesarias para el Análisis Exploratorio. Instalamos 2 paquetes, "Nortest" para medir la normalidad de Lilliefors a través de la función "lillie.test",  "Arule" para el estudio de "apriori" y por último el paquete "MASS" para la función "stepAIC" para hacer la selección de variables de un modelo de regresión lineal.
+Antes de cargar los datos, procedemos a instalar y cargar los paquetes necesarios para el Análisis Exploratorio. Instalamos 2 paquetes, "Nortest" para medir la normalidad a través de la correción de Lilliefors con la función "lillie.test" y el paquete "MASS" para el criterio "stepAIC" en la selección de variables de un modelo de regresión lineal.
 
-
-```{r librerias, echo=TRUE, message=FALSE, warning=FALSE}
-getwd()
-if(!is.element("arules", installed.packages())){
-  install.packages("arules")
-}
-library(arules)
-
+```{r librerias, include=FALSE}
 if(!is.element("nortest", installed.packages())){
   install.packages("nortest")
 }
-library(nortest)
 
 if(!is.element("MASS", installed.packages())){
   install.packages("MASS")
 }
+```
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+library(nortest)
 library(MASS)
 ```
+
+###   2.2 - Carga de Datos
 
 Se cargan los datos correspondientes a "Student Performance Data Set" de Machine Learning Repository que recoge información de estudiantes de Secundaria de dos colegios Portugueses en las asignaturas de Matemáticas.
 
 ```{r carga de datos, echo=TRUE}
-
 studentMat <- read.table("student-mat.csv", row.names=NULL, sep=";", header = TRUE)
-
 ```
-Este dataset contiene 382 casos.
+Este dataset contiene 395 casos y 33 variables.
 
 
 ## 3 - Análisis Descriptivo
-###   3.1 Análisis descriptivo de todas las variables
-Realizamos un análisi descriptivo de todas las variables del fichero "student-mat" a través de la función "summary()"
+###   3.1 - Análisis descriptivo de todas las variables
+
+Primeramente realizamos un análisis descriptivo de todas las variables del fichero "student-mat" a través de la función "summary()"
 
 ```{r, echo=TRUE}
-
 summary(studentMat)
-
 ```
-Miramos la normalidad de nuestra variable objetivo: G3. test normalidad g3- kolmogorov porque hay mas de 30 observaciones. normalidad de g3 para comparar medias o medianas. Vamos a anlaizar variable continua con binaria.
+###   3.2 - Estudio de nuestra variable objetivo: G3
 
-```{r}
-#ks.test(studentMat$G3, pnorm, mean(studentMat$G3, sd(studentMat$G3)))
+Miramos la normalidad de nuestra variable objetivo: G3. Para ello, usamos el test de Kolmogorov-Smirnov con la corrección de Lilliefors a través de la función "lillie.test()". Nuestra hipótesis nula es que G3 sigue una distribución Normal.
+
+```{r, echo=TRUE}
 lillie.test(x=studentMat$G3)
-
 ```
- Rechazamos la hipotesis nula de Normalidad, por lo que comparamos medianas.
+Como el p_valor es menor a 0.05, rechazamos la hipotesis nula de Normalidad, por lo que podemos concluir que la variable objetivo G3 no sigue una distribución normal y tendríamos que comparar medianas.
 
 
-Procedemos a realizar un diagrama de cajas o boxplot de nuestra variable objetivo: G3.
+Ahora procedemos a realizar un diagrama de cajas o boxplot de nuestra variable objetivo: G3.
 
 ```{r, boxplot}
-
 boxplot(studentMat$G3, main= 'G3', xlab= 'G3', ylab= 'final grades')
 ```
 Observamos que la línea gruesa de la caja correspondiente a la mediana se situa entorno a la nota 11.
 
-Vamos a sacar las frecuencias de las variables binarias y categóricas:
+###   3.3 - Estudio de las variables binarias y categóricas.
 
-```{r, frecuencias, echo=FALSE}
-##School
-prop.table(table(studentMat$school))
-## sex
-prop.table(table(studentMat$sex))
-##address
-prop.table(table(studentMat$address))
-##Famsize
-prop.table(table(studentMat$famsize))
-##Pstatus
-prop.table(table(studentMat$Pstatus))
-##Medu
-table(studentMat$Medu)
-prop.table(table(studentMat$Medu))
-##Fedu
-table(studentMat$Fedu)
-prop.table(table(studentMat$Fedu))
-##Mjob
-table(studentMat$Mjob)
-prop.table(table(studentMat$Mjob))
-##Fjob
-table(studentMat$Fjob)
-prop.table(table(studentMat$Fjob))
-##reason
-table(studentMat$reason)
-prop.table(table(studentMat$reason))
-##guardian
-table(studentMat$guardian)
-prop.table(table(studentMat$guardian))
-##traveltime
-table(studentMat$traveltime)
-prop.table(table(studentMat$traveltime))
+Realizamos las frecuencias y gráfica de barras de una variable categórica "studytime" y otra variable binaria "schoolsup". He elegido estas variables ya que pueden influir en nuestra variable objetivo G3.
+
+```{r, frecuencias, echo=TRUE, fig.height=4}
 ##studytime
 table(studentMat$studytime)
-prop.table(table(studentMat$studytime))
-##failures
-table(studentMat$failures)
-prop.table(table(studentMat$failures))
-##schoolsup
-prop.table(table(studentMat$schoolsup))
-##famsup
-prop.table(table(studentMat$famsup))
-##paid
-prop.table(table(studentMat$paid))
-##activities
-prop.table(table(studentMat$activities))
-##nursery
-prop.table(table(studentMat$nursery))
-##higher
-prop.table(table(studentMat$higher))
-##internet
-prop.table(table(studentMat$internet))
-##romantic
-prop.table(table(studentMat$romantic))
+studytimeF <- prop.table(table(studentMat$studytime))
+barplot(studytimeF, main= "Studytime", xlab= "hours" , ylab="%", names.arg= c("< 2", "2 to 5", "5 to 10", ">10"), cex.names=1)
 ```
 
+```{r, echo=TRUE, fig.height=4}
+##schoolsup
+schoolsupF <- prop.table(table(studentMat$schoolsup))
+barplot(schoolsupF,  main= "Schoolsup" , xlab= "Extra educational support" , ylab="%")
 
-
-Además realizamos los siguientes diagrama de barras e histogramas de las variables binarias que pueden ser más importantes por la influencia de nuestra variable de estudio G3.
-
-```{r, echo=TRUE}
-str(studentMat)
-#str(studentPor)
-barplot(prop.table(table((studentMat$school))))
 ```
 
 ## 4 - Análisis Exploratorio
-```{r, echo=FALSE}
-##rules <- apriori(studentMat, parameter=list(support=0.5, confidence=0.75))
-##inspect(rules)
-```
+###   4.1 - Correlación
 
-```{r, echo=FALSE}
-##d <- dist(as.matrix(studentMat))
-##hc <- hclust(d)
-##plot(hc)
-```
-
-Vamos a hacer correlacion con las variables continuas y categoricas con mas de 4 categorias.
+Realizamos una correlacion con las variables continuas y categoricas con más de 4 categorias.
 
 ```{r}
-
-#studentNum <-c(studentMat$age, studentMat$absences, studentMat$famrel, studentMat$freetime, studentMat$goout, studentMat$Dalc, studentMat$Walc, studentMat$health, studentMat$G1, studentMat$G2, studentMat$G3)
 cor(studentMat[c(3, 30, 24, 25, 26, 27,28, 29, 31, 32, 33)])
-
 ```
 
-las variables que hemos analizado , no tienen mucha correlación entre ellas. Siendo las más altas, la relación de Walc con Dalc, y Goout con Walc. Que procederemos a analizar su significatividad.
-Las notas finales también están muy corrlacionadas entre sí como se podía esperar.
+Las variables que hemos analizado no tienen mucha correlación entre ellas. Las correlaciones más altas se encuentran entre las variables "Walc" con "Dalc" (0.64), y "goout" con "Walc"(0.42). Posteriormente procederemos a analizar su significatividad.
+Como se podía esperar, las notas finales también están muy corrlacionadas entre sí.
 
-Nuestra variable objetivo G3, se correlaciona mayormente con edad y goout.Pero su correlación es muy baja.
+Además, también podemos decir que nuestra variable objetivo G3, se correlaciona mayormente con "edad" (-0.16) y "goout"(-0.13) de forma negativa. Pero su correlación es muy baja.
 
+Vamos a analizar si estas correlaciones más altas son significativas a través de la función "cor.test()". Para ello planteamos la hipótesis nula de que no hay relación lineal entre la pareja de variables.
 ```{r}
 cor.test(studentMat$Walc, studentMat$Dalc)
 cor.test(studentMat$Walc, studentMat$goout)
 cor.test(studentMat$G3, studentMat$age)
 cor.test(studentMat$G3, studentMat$goout)
-#cor.test(studentMat$G3, studentMat$health)
-
 ```
 
-QUITAR:Procedemos a realizar un scatterolot de nuestra variable objetivo con sus 2 variables más correlacionadas:
+En todas ellas, el p_valor es menor que 0.05, rechazamos la hipotesis nula, entonces existe una asociación lineal entre el par de variables, por lo que concluimos que todas las correlaciones son significativas.
 
-```{r}
 
-##plot(studentMat$G3, studentMat$age)
-##plot(studentMat$G3, studentMat$goout)
+###   4.2 - Regresión
 
-```
-
-Ahora procedemos a analizar las variables binarias y las variables cagtegóricas hasta 4 categorias.
-
-```{r}
-
-barplot(prop.table(table((studentMat$school))))
-
-```
-
-Hacemos una regresión:
-lm hacemos una regresión de g3 con todas las variables
-
-despues con un metodo de seleccion de variables, nos quedamos con el mejor modelo, según el criterio AIC.
+Realizamos una regresión de G3 con todas las variables del dataset. A partir de esta regresión, sacamos un modelo final con un método de selección de variables: Steptwise, y el criterio AIC donde nos quedamos con el mejor modelo.
 
 ```{r}
 studentReg <- lm(G3 ~ school+ sex+ + age+ address + famsize  + Pstatus + Medu + Fedu + Mjob + Fjob + reason + guardian + traveltime + studytime+ failures + schoolsup + famsup + paid + activities + nursery + higher + internet + romantic + famrel  + freetime  + goout + Dalc + Walc + health + absences , data = studentMat)
-summary(studentReg)
 
 step.model <- stepAIC(studentReg, direction = "both", trace = FALSE)
 summary(step.model)
 ```
+Por lo tanto, podemos construir un modelo con estas variables explicativas que afectarán a G3.
 
+###   4.5 Clustering
+
+Realizamos un análisis cluster con el método jerárquico aglomerativo con la forma de agrupación "average".
+```{r }
+sele <- studentMat[c(2, 14, 15)]
+#hc <- hclust(dist(c(33, 2,3, 5, 7, 9, 14, 15, 16, 17, 23, 25, 26, 30)), "ave")
+hf <- hclust(dist(sele), "ave")
+plot(hf)
+
+```
+En el dendograma podemos observar 3 grupos diferenciados formados por:
+1- Variables relacionadas con el colegio y estudio.
+2- Variables con información de los padres.
+3- Variables Sociodemográficas.
 
 ## 5 - Conclusiones
 
-Las variables jque influyen en la nota final son las variables del ultimo modelo (todas)
+A través de las correlaciones, hemos visto que la consumición diaria de alchohol está correlacionada con la consumición de alcohol durante el fin de semana.
+También observamos que la variable de consumir alchohol durante el fin de semana está directamente correlacionada con la variable salir con los amigos. Es decir, que cuanto más se sale con amigos, más alcohol se consume el fin de semana.
+Nuestra variable objetivo G3, que es la nota final, está inversamente correlacionado con Edad y Salir con los amigos. Es decir, alumnos de menor edad sacarán mejores notas y además cuanto más se salga con amigos menos nota final se obtendrá.
+
+Las variables que influyen en la nota final son las variables del ultimo modelo (stepmodel), las siguientes variables: Sex, Medu, studytime, failures, romantic:yes, goout y absences explican mejor el modelo pero siempre contando con el resto de variables del modelo.
