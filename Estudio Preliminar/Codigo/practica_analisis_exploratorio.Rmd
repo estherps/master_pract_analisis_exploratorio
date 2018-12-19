@@ -1,11 +1,11 @@
 ---
 title: "Práctica Análisis Exploratorio"
 author: "Esther Puerto Sanz"
-date: "18 December 2018"
+date: "19 December 2018"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -80,7 +80,8 @@ Realizamos las frecuencias y gráfica de barras de una variable categórica "stu
 ##studytime
 table(studentMat$studytime)
 studytimeF <- prop.table(table(studentMat$studytime))
-barplot(studytimeF, main= "Studytime", xlab= "hours" , ylab="%", names.arg= c("< 2", "2 to 5", "5 to 10", ">10"), cex.names=1)
+barplot(studytimeF, main= "Studytime", xlab= "hours" , ylab="%", 
+        names.arg= c("< 2", "2 to 5", "5 to 10", ">10"), cex.names=1)
 ```
 
 ```{r, echo=TRUE, fig.height=4}
@@ -120,32 +121,21 @@ En todas ellas, el p_valor es menor que 0.05, rechazamos la hipotesis nula, ento
 Realizamos una regresión de G3 con todas las variables del dataset. A partir de esta regresión, sacamos un modelo final con un método de selección de variables: Steptwise, y el criterio AIC donde nos quedamos con el mejor modelo.
 
 ```{r}
-studentReg <- lm(G3 ~ school+ sex+ + age+ address + famsize  + Pstatus + Medu + Fedu + Mjob + Fjob + reason + guardian + traveltime + studytime+ failures + schoolsup + famsup + paid + activities + nursery + higher + internet + romantic + famrel  + freetime  + goout + Dalc + Walc + health + absences , data = studentMat)
+studentReg <- lm(G3 ~ school+ sex+ + age+ address + famsize  + Pstatus + Medu + Fedu
+                 + Mjob + Fjob + reason + guardian + traveltime + studytime + failures 
+                 + schoolsup + famsup + paid + activities + nursery + higher 
+                 + internet + romantic + famrel  + freetime  + goout + Dalc + Walc
+                 + health + absences , data = studentMat)
 
 step.model <- stepAIC(studentReg, direction = "both", trace = FALSE)
 summary(step.model)
 ```
 Por lo tanto, podemos construir un modelo con estas variables explicativas que afectarán a G3.
 
-###   4.5 Clustering
-
-Realizamos un análisis cluster con el método jerárquico aglomerativo con la forma de agrupación "average".
-```{r }
-sele <- studentMat[c(2, 14, 15)]
-#hc <- hclust(dist(c(33, 2,3, 5, 7, 9, 14, 15, 16, 17, 23, 25, 26, 30)), "ave")
-hf <- hclust(dist(sele), "ave")
-plot(hf)
-
-```
-En el dendograma podemos observar 3 grupos diferenciados formados por:
-1- Variables relacionadas con el colegio y estudio.
-2- Variables con información de los padres.
-3- Variables Sociodemográficas.
-
 ## 5 - Conclusiones
 
 A través de las correlaciones, hemos visto que la consumición diaria de alchohol está correlacionada con la consumición de alcohol durante el fin de semana.
-También observamos que la variable de consumir alchohol durante el fin de semana está directamente correlacionada con la variable salir con los amigos. Es decir, que cuanto más se sale con amigos, más alcohol se consume el fin de semana.
-Nuestra variable objetivo G3, que es la nota final, está inversamente correlacionado con Edad y Salir con los amigos. Es decir, alumnos de menor edad sacarán mejores notas y además cuanto más se salga con amigos menos nota final se obtendrá.
+También observamos que la variable de consumir alchohol durante el fin de semana está directamente correlacionada con la variable salir con los amigos. Es decir, que cuanto más se sale con amigos, más alcohol se consume el fin de semana. Por lo tanto, ambas variables no podrían ir juntas en un modelo pues pueden provocar multicolinealidad.
+Nuestra variable objetivo G3, que es la nota final, está inversamente correlacionada con Edad y Salir con los amigos. Es decir, alumnos de menor edad sacarán mejores notas y además cuanto más se salga con amigos menos nota final se obtendrá.
 
-Las variables que influyen en la nota final son las variables del ultimo modelo (stepmodel), las siguientes variables: Sex, Medu, studytime, failures, romantic:yes, goout y absences explican mejor el modelo pero siempre contando con el resto de variables del modelo.
+Las variables que influyen en la nota final son las variables del ultimo modelo (stepmodel), las siguientes variables: Sex, Medu, studytime, failures, romantic:yes, goout y absences afectan significativamente en la nota final pero siempre considerando el resto de variables dentro del modelo.
